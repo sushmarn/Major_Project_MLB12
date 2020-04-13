@@ -2,9 +2,6 @@ import pandas as pd
 import numpy as np
 bd=pd.read_csv('Data_Train (2).csv')
 bd
-#removing all the rows that have any of the values as null
-bd=bd.dropna(how='any')
-bd
 
 #code to divide the 'Name' column to 3 different columns 'Namen', 'Model', and 'Version'
 import warnings
@@ -20,10 +17,10 @@ for i in range(len(bd['Name'])):
     bd['Model'].iloc[i]=res[1]
     bd['Version'].iloc[i]=res[2:]
 
-#code to convert the the list of elements in the column 'Version' to string with a space in between the words
+#code to convert the the list of elements in the column 'Version' to string with an underscore('_') in between the words
 str1=""
 for i in range(len(bd['Version'])):
-    bd['Version'].iloc[i]= [x + ' ' for x in bd['Version'].iloc[i]]\
+    bd['Version'].iloc[i]= [x + '_' for x in bd['Version'].iloc[i]]\
 j=0
 for i in bd['Version']:
         str1=""
@@ -33,7 +30,7 @@ for i in bd['Version']:
         
 bd['Version'].iloc[0]
 
-#code to remove the space after the last word
+#code to remove the underscore('_') after the last word
 str2=''
 for i in range(len(bd['Version'])):
     li=list(bd['Version'].iloc[i])
@@ -48,4 +45,19 @@ for i in bd['Version']:
         
  bd['Version'].iloc[0]       
 
+
+#code to remove the column 'Name' and renaming the column 'Namen' as 'Name'
+bd=bd.drop(columns='Name')
+bd=bd.rename(columns={"Namen": "Name"})
+
+#code to replace the null values in the column 'Seats' with the values from other rows that have the same 'Model' and 'version'
+bd['Seats']=bd['Seats'].fillna('null')
+nu=list()
+for i in range(len(bd['Seats'])):
+    if(bd['Seats'].isnull().iloc[i]==True):
+        nu.append(i)        
+for i in nu:
+    bd['Seats'].iloc[i]=bd[(bd['Model']=='City')&(bd['Version']=='1.5 GXI')&(bd['Seats']!='null')].iloc[0,10]
         
+#removing all the rows that have any of the values as null
+bd=bd.dropna(how='any')
