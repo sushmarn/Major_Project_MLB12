@@ -17,47 +17,34 @@ for i in range(len(bd['Name'])):
     bd['Model'].iloc[i]=res[1]
     bd['Version'].iloc[i]=res[2:]
 
-#code to convert the the list of elements in the column 'Version' to string with an underscore('_') in between the words
-str1=""
-for i in range(len(bd['Version'])):
-    bd['Version'].iloc[i]= [x + '_' for x in bd['Version'].iloc[i]]\
-j=0
-for i in bd['Version']:
-        str1=""
-        str1=str1.join(i)
-        bd['Version'].iloc[j]=str1
-        j=j+1    
+#code to convert and join the the list of elements in the column 'Version' to an object with a space(' ') in between the words
+for _ in range(len(bd.Version)):
+    jv=' '
+    temp=jv.join(bd.Version[_])
+    bd.Version[_]=temp
+print(bd.Version[0])      
         
-bd['Version'].iloc[0]
-
-#code to remove the underscore('_') after the last word
-str2=''
-for i in range(len(bd['Version'])):
-    li=list(bd['Version'].iloc[i])
-    del(li[-1])
-    bd['Version'].iloc[i]=li
-j=0
-for i in bd['Version']:
-        str1=""
-        str1=str1.join(i)
-        bd['Version'].iloc[j]=str1
-        j=j+1    
-        
- bd['Version'].iloc[0]       
-
-
 #code to remove the column 'Name' and renaming the column 'Namen' as 'Name'
 bd=bd.drop(columns='Name')
 bd=bd.rename(columns={"Namen": "Name"})
 
 #code to replace the null values in the column 'Seats' with the values from other rows that have the same 'Model' and 'version'
-bd['Seats']=bd['Seats'].fillna('null')
 nu=list()
-for i in range(len(bd['Seats'])):
-    if(bd['Seats'].isnull().iloc[i]==True):
-        nu.append(i)        
+for k in range(len(bd['Seats'])):
+    if(bd['Seats'].isnull().iloc[k]==True):
+        nu.append(k) 
+        
+bd['Seats']=bd['Seats'].fillna('null')      
+
 for i in nu:
-    bd['Seats'].iloc[i]=bd[(bd['Model']=='City')&(bd['Version']=='1.5 GXI')&(bd['Seats']!='null')].iloc[0,10]
+    for j in range(len(bd)):
+        if((bd['Model'][j]==bd['Model'][i])&(bd['Version'][j]==bd['Version'][i])&(bd['Seats'][j]!='null')):
+            bd['Seats'][i]=bd['Seats'][j]
+        
+for k in nu:
+    if(bd['Seats'][k]=='null'):
+         bd['Seats'].iloc[k]=float('nan')         
+        
         
 #removing all the rows that have any of the values as null
 bd=bd.dropna(how='any')
