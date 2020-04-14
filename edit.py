@@ -61,3 +61,6 @@ for i in nu:
         
 #removing all the rows that have any of the values as null
 bd=bd.dropna(how='any')
+
+#removed columns "Mileage", "Engine", "Power"
+bd = bd.drop(["Mileage", "Engine", "Power"], axis = 1)
