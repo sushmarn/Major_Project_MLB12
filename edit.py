@@ -3,6 +3,11 @@ import numpy as np
 bd=pd.read_csv('Data_Train (2).csv')
 bd
 
+#Editing the column variable "Name" to fill in the spaces between words of a same name
+s=['Wagon R','Range Rover','Land Rover','Corolla Altis','Indica Vista','Innova Crysta','Pajero Sport','Ssangyong Rexton','Vitara Brezza','Zest Revotron','Santo Xing','B Class','Cooper Convertible','Coutryman Cooper','Grand ilo','Grand Punto']
+t=['Wagon_R','Range_Rover','Land_Rover','Corolla_Altis','Indica_Vista','Innova_Crysta','Pajero_Sport','Ssangyong_Rexton','Vitara_Brezza','Zest_Revotron','Santo_Xing','B_Class','Cooper_Convertible','Coutryman_Cooper','Grand_ilo','Grand_Punto']
+bd['Name']=bd['Name'].replace(s,t,regex=True)
+
 #code to divide the 'Name' column to 3 different columns 'Namen', 'Model', and 'Version'
 import warnings
 warnings.filterwarnings('ignore')
