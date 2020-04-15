@@ -1,5 +1,10 @@
 import pandas as pd
 import numpy as np
+
+#for graphing purposes
+import seaborn as sns
+import matplotlib.pyplot as plt
+
 bd=pd.read_csv('Data_Train (2).csv')
 bd
 
@@ -69,3 +74,17 @@ bd=bd.dropna(how='any')
 
 #removed columns "Mileage", "Engine", "Power"
 bd = bd.drop(["Mileage", "Engine", "Power"], axis = 1)
+
+#cleaning up the owner data
+bd["Owner_Type"] = bd["Owner_Type"].str.replace("First", "1")
+bd["Owner_Type"] = bd["Owner_Type"].str.replace("Second", "2")
+bd["Owner_Type"] = bd["Owner_Type"].str.replace("Third", "3")
+bd["Owner_Type"] = bd["Owner_Type"].str.replace("Fourth & Above", "4")
+
+#performing univariate analysis on the owner data
+#basically we're just plotting a graph here
+print("Number of cars sold according to type of owner: ")
+owner_graph = sns.countplot(x = "Owner_Type", data = bd)
+
+#similarly perform univariate analysis on the location data
+loc_graph = sns.countplot(x = "Location", data = bd)
