@@ -1,0 +1,268 @@
+import pandas as pd
+import numpy as np
+bd=pd.read_csv('Data_Train (2).csv')
+
+import warnings
+warnings.filterwarnings('ignore')
+bd['Namen']=""
+bd['Model']=""
+bd['Version']=""
+
+import re
+pat=re.compile(' ')
+for i in range(len(bd['Name'])):
+    res=re.split(pat,bd['Name'].iloc[i])
+    bd['Namen'].iloc[i]=res[0]
+    bd['Model'].iloc[i]=res[1]
+    bd['Version'].iloc[i]=res[2:]
+    
+for _ in range(len(bd.Version)):
+    jv='_'
+    temp=jv.join(bd.Version[_])
+    bd.Version[_]=temp
+print(bd.Version[0])    
+
+bd=bd.drop(columns='Name')
+bd=bd.rename(columns={"Namen": "Name"})
+
+nu=list()
+for k in range(len(bd['Seats'])):
+    if(bd['Seats'].isnull().iloc[k]==True):
+        nu.append(k)
+
+bd['Seats']=bd['Seats'].fillna('null')        
+
+for i in nu:
+    for j in range(len(bd)):
+        if((bd['Model'][j]==bd['Model'][i])&(bd['Version'][j]==bd['Version'][i])&(bd['Seats'][j]!='null')):
+            bd['Seats'][i]=bd['Seats'][j] 
+            
+bd=bd[bd['Seats']!='null']
+
+nu1=list()
+for l in range(len(bd['Power'])):
+    if((bd['Power'].iloc[l]=='null bhp') | (bd['Power'].isnull().iloc[l])):
+        nu1.append(l)
+        
+for a in nu1:
+    for b in range(len(bd)):
+        if((bd['Model'].iloc[b]==bd['Model'].iloc[a])&(bd['Version'].iloc[b]==bd['Version'].iloc[a])&(bd['Power'].iloc[b]!='null bhp') ):
+            bd['Power'].iloc[a]=bd['Power'].iloc[b]  
+            
+            
+            
+
+bd=bd[bd['Power']!='null bhp']
+
+nu2=list()
+for m in range(len(bd['Engine'])):
+    if((bd['Engine'].isnull().iloc[m])):
+        nu2.append(m)  
+        
+bd['Engine']=bd['Engine'].fillna('null')  
+
+for c in nu2:
+    for d in range(len(bd)):
+        if((bd['Model'].iloc[d]==bd['Model'].iloc[c])&(bd['Version'].iloc[d]==bd['Version'].iloc[c])&(bd['Engine'].iloc[d]!='null') ):
+            bd['Engine'].iloc[c]=bd['Engine'].iloc[d]
+            
+bd=bd.dropna(how='any')
+
+#Removing units from the columns
+new=bd['Mileage'].str.split(' ',expand=True)
+bd['Mileage']=new[0]
+new=bd['Engine'].str.split(' ',expand=True)
+bd['Engine']=new[0]
+new=bd['Power'].str.split(' ',expand=True)
+bd['Power']=new[0]
+bd[['Mileage','Engine','Power']]=bd[['Mileage','Engine','Power']].apply(pd.to_numeric)
+
+
+test=pd.read_excel('Data_Test (2).xlsx')
+
+
+import warnings
+warnings.filterwarnings('ignore')
+test['Namen']=""
+test['Model']=""
+test['Version']=""
+
+import re
+pat=re.compile(' ')
+for i in range(len(test['Name'])):
+    res=re.split(pat,test['Name'].iloc[i])
+    test['Namen'].iloc[i]=res[0]
+    test['Model'].iloc[i]=res[1]
+    test['Version'].iloc[i]=res[2:]
+    
+ for _ in range(len(test.Version)):
+    jv='_'
+    temp=jv.join(test.Version[_])
+    test.Version[_]=temp
+print(test.Version[0])   
+
+
+test=test.drop(columns='Name')
+test=test.rename(columns={"Namen": "Name"})
+
+test[test['Power']=='null bhp']
+
+for k in range(len(test)):
+    if(test['Power'][k]=='null bhp'):
+         test['Power'].iloc[k]=float('nan') 
+         
+#Removing units from the columns
+new=test['Mileage'].str.split(' ',expand=True)
+test['Mileage']=new[0]
+new=test['Engine'].str.split(' ',expand=True)
+test['Engine']=new[0]
+new=test['Power'].str.split(' ',expand=True)
+test['Power']=new[0]
+test[['Mileage','Engine','Power']]=test[['Mileage','Engine','Power']].apply(pd.to_numeric)
+
+
+
+bd = bd[['Year','Fuel_Type','Transmission','Owner_Type','Seats','Name','Model','Version','Location','Kilometers_Driven','Mileage','Engine','Power','Price']]
+
+test = test[['Year','Fuel_Type','Transmission','Owner_Type','Seats','Name','Model','Version','Location','Kilometers_Driven','Mileage','Engine','Power']]
+
+#OneHotEncoding the categorical columns
+bd=pd.get_dummies(bd, columns=['Name','Model','Version','Location'],prefix_sep='_')
+test=pd.get_dummies(test, columns=['Name','Model','Version','Location'],prefix_sep='_')
+
+
+
+
+X=bd.iloc[:,:-1].values
+y=bd.iloc[:,13].values
+
+bd.iloc[:,:-1].values[1,1]
+
+for i in range(len(X)):
+    X[i,1]=X[i,1].replace('Diesel','d')
+    X[i,1]=X[i,1].replace('CNG','c')
+    X[i,1]=X[i,1].replace('LPG','b')
+    X[i,1]=X[i,1].replace('Petrol','a')
+    
+    
+for i in range(len(X)):
+    X[i,2]=X[i,2].replace('Automatic','b')
+    X[i,2]=X[i,2].replace('Manual','a')
+    
+for i in range(len(X)):
+    X[i,3]=X[i,3].replace('First','d')
+    X[i,3]=X[i,3].replace('Second','c')
+    X[i,3]=X[i,3].replace('Third','b')
+    X[i,3]=X[i,3].replace('Fourth & Above','a')
+    
+
+from sklearn.preprocessing import LabelEncoder,OneHotEncoder
+labelencoder_X=LabelEncoder()
+X[:,0]=labelencoder_X.fit_transform(X[:,0])
+
+X[:,1]=labelencoder_X.fit_transform(X[:,1])
+
+X[:,2]=labelencoder_X.fit_transform(X[:,2])
+X[:,3]=labelencoder_X.fit_transform(X[:,3])
+X[:,4]=labelencoder_X.fit_transform(X[:,4])
+
+
+Xt=test.iloc[:,:-1].values
+yt=test.iloc[:,13].values
+
+for i in range(1234):
+    Xt[i,1]=Xt[i,1].replace('Diesel','d')
+    Xt[i,1]=Xt[i,1].replace('CNG','c')
+    Xt[i,1]=Xt[i,1].replace('LPG','b')
+    Xt[i,1]=Xt[i,1].replace('Petrol','a')
+    
+for i in range(1234):
+    Xt[i,2]=Xt[i,2].replace('Automatic','b')
+    Xt[i,2]=Xt[i,2].replace('Manual','a')
+    
+for i in range(1234):
+    Xt[i,3]=Xt[i,3].replace('First','d')
+    Xt[i,3]=Xt[i,3].replace('Second','c')
+    Xt[i,3]=Xt[i,3].replace('Third','b')
+    Xt[i,3]=Xt[i,3].replace('Fourth & Above','a')
+    
+    
+
+from sklearn.preprocessing import LabelEncoder,OneHotEncoder
+labelencoder_Xt=LabelEncoder()
+Xt[:,0]=labelencoder_Xt.fit_transform(Xt[:,0])
+
+
+Xt[:,1]=labelencoder_Xt.fit_transform(Xt[:,1])
+Xt[:,2]=labelencoder_Xt.fit_transform(Xt[:,2])
+Xt[:,3]=labelencoder_Xt.fit_transform(Xt[:,3])
+Xt[:,4]=labelencoder_Xt.fit_transform(Xt[:,4])
+
+
+for i in range(len(bd)):
+    bd.iloc[i,0]=X[i,0]
+    bd.iloc[i,1]=X[i,1]
+    bd.iloc[i,2]=X[i,2]
+    bd.iloc[i,3]=X[i,3]
+    bd.iloc[i,4]=X[i,4]
+bd  
+
+
+X=bd.iloc[:,:-1].values
+y=bd.iloc[:,9].values
+
+from sklearn.model_selection import train_test_split
+X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.2,random_state=0)
+
+from sklearn.linear_model import LinearRegression
+regressor=LinearRegression()
+regressor.fit(X_train,y_train)
+
+
+y_pred=regressor.predict(X_test)
+
+
+from sklearn.ensemble import RandomForestRegressor
+rf = RandomForestRegressor(n_estimators = 1000, random_state = 0)
+rf.fit(X_train, np.ravel(y_train))
+pred=rf.predict(X_test)
+errors = abs(pred-np.ravel(y_test))
+mape = 100 * (errors / np.ravel(y_test))
+accuracy = 100 - np.mean(mape)
+print('Accuracy:', round(accuracy, 2), '%.')
+
+
+for i in range(len(test)):
+    test.iloc[i,0]=Xt[i,0]
+    test.iloc[i,1]=Xt[i,1]
+    test.iloc[i,2]=Xt[i,2]
+    test.iloc[i,3]=Xt[i,3]
+    test.iloc[i,4]=Xt[i,4]
+bd  
+
+test=test.dropna(how='any')
+
+
+#Making necessary changes to columns in test data as columns change after OneHotEncoding
+for i in test.columns.tolist():
+    if i not in bd.columns.tolist():
+        test.drop(i,axis=1,inplace=True)
+
+for i in bd.columns.tolist():
+    if i not in test.columns.tolist() and i!='Price':
+        test[i]=0
+
+
+
+#Fitting the whole train data to predict price from the given test data
+X_train=bd.loc[:,bd.columns!='Price']
+y_train=bd.loc[:,bd.columns=='Price']
+X_test=test.loc[:,:]
+from sklearn.ensemble import RandomForestRegressor
+rf = RandomForestRegressor(n_estimators = 1000, random_state = 42)
+rf.fit(X_train, np.ravel(y_train))
+
+
+#Prediction
+pred=rf.predict(X_test)
+print(pred)
