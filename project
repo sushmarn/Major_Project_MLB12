@@ -2,12 +2,14 @@ import pandas as pd
 import numpy as np
 bd=pd.read_csv('Data_Train (2).csv')
 
+#Creating empty columns
 import warnings
 warnings.filterwarnings('ignore')
 bd['Namen']=""
 bd['Model']=""
 bd['Version']=""
 
+#Filling the empty columns by dividing the column 'Name' into the columns 'Namen', 'Model', and 'Version'
 import re
 pat=re.compile(' ')
 for i in range(len(bd['Name'])):
@@ -15,35 +17,44 @@ for i in range(len(bd['Name'])):
     bd['Namen'].iloc[i]=res[0]
     bd['Model'].iloc[i]=res[1]
     bd['Version'].iloc[i]=res[2:]
-    
+ 
+#Converting the list of elements of the column 'Version' into an object with an underscore('_') between the words
 for _ in range(len(bd.Version)):
     jv='_'
     temp=jv.join(bd.Version[_])
     bd.Version[_]=temp
 print(bd.Version[0])    
 
+#Deleting the main 'Name' column and renaming 'Namen' as 'Name'
 bd=bd.drop(columns='Name')
 bd=bd.rename(columns={"Namen": "Name"})
 
+#code to handle null values of the column 'Seats'
+#Copying all the indexes for which the 'Seats' value is null into a list nu
 nu=list()
 for k in range(len(bd['Seats'])):
     if(bd['Seats'].isnull().iloc[k]==True):
         nu.append(k)
 
+#Filling the rows having null values in 'Seats' with the same value as that of another row having same 'Model' and 'Version' that is not null
 bd['Seats']=bd['Seats'].fillna('null')        
-
 for i in nu:
     for j in range(len(bd)):
         if((bd['Model'][j]==bd['Model'][i])&(bd['Version'][j]==bd['Version'][i])&(bd['Seats'][j]!='null')):
             bd['Seats'][i]=bd['Seats'][j] 
             
+#Dropping the rows that still have null values for 'Seats'           
 bd=bd[bd['Seats']!='null']
 
+
+#code to handle null values of the column 'Power'
+#Copying all the indexes for which the 'Power' value is null into a list nu1
 nu1=list()
 for l in range(len(bd['Power'])):
     if((bd['Power'].iloc[l]=='null bhp') | (bd['Power'].isnull().iloc[l])):
         nu1.append(l)
-        
+
+#Filling the rows having null values in 'Power' with the same value as that of another row having same 'Model' and 'Version' that is not null
 for a in nu1:
     for b in range(len(bd)):
         if((bd['Model'].iloc[b]==bd['Model'].iloc[a])&(bd['Version'].iloc[b]==bd['Version'].iloc[a])&(bd['Power'].iloc[b]!='null bhp') ):
@@ -51,21 +62,25 @@ for a in nu1:
             
             
             
-
+#Dropping the rows that still have null values for 'Seats' 
 bd=bd[bd['Power']!='null bhp']
 
+
+#code to handle null values of the column 'Engine'
+#Copying all the indexes for which the 'Engine' value is null into a list nu2
 nu2=list()
 for m in range(len(bd['Engine'])):
     if((bd['Engine'].isnull().iloc[m])):
         nu2.append(m)  
-        
-bd['Engine']=bd['Engine'].fillna('null')  
 
+#Filling the rows having null values in 'Engine' with the same value as that of another row having same 'Model' and 'Version' that is not null
+bd['Engine']=bd['Engine'].fillna('null')  
 for c in nu2:
     for d in range(len(bd)):
         if((bd['Model'].iloc[d]==bd['Model'].iloc[c])&(bd['Version'].iloc[d]==bd['Version'].iloc[c])&(bd['Engine'].iloc[d]!='null') ):
             bd['Engine'].iloc[c]=bd['Engine'].iloc[d]
-            
+
+#Dropping all the rows that have null values in any of their columns
 bd=bd.dropna(how='any')
 
 #Removing units from the columns
@@ -78,9 +93,33 @@ bd['Power']=new[0]
 bd[['Mileage','Engine','Power']]=bd[['Mileage','Engine','Power']].apply(pd.to_numeric)
 
 
+
+
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+%matplotlib inline
+sns.heatmap(bd.corr())
+
+
+sns.pairplot(bd)
+
+#we can see that all columns have some kind of relation with the Price. Some columns might have low relationship but we keep them for more accuracy.
+
+sns.boxplot(x='Price',y='Transmission',data=bd)
+
+sns.boxplot(x='Price',y='Fuel_Type',data=bd.loc[(bd['Price']<20)])
+
+sns.boxplot(x='Price',y='Owner_Type',data=bd.loc[(bd['Price']<50)])
+
+#We see that there is some order for all the three columns, and thus we must consider Label Encoding.
+
+
+
+
 test=pd.read_excel('Data_Test (2).xlsx')
 
-
+#Doing the same data preparation to the test data as done with train data
 import warnings
 warnings.filterwarnings('ignore')
 test['Namen']=""
@@ -126,36 +165,37 @@ bd = bd[['Year','Fuel_Type','Transmission','Owner_Type','Seats','Name','Model','
 
 test = test[['Year','Fuel_Type','Transmission','Owner_Type','Seats','Name','Model','Version','Location','Kilometers_Driven','Mileage','Engine','Power']]
 
-#OneHotEncoding the categorical columns
+#OneHotEncoding the categorical columns 'Name', 'Model', 'Version', and 'Location'
 bd=pd.get_dummies(bd, columns=['Name','Model','Version','Location'],prefix_sep='_')
 test=pd.get_dummies(test, columns=['Name','Model','Version','Location'],prefix_sep='_')
 
 
 
-
+#Label encoding the train data columns 'Year', 'Fuel_type', 'Owner_Type', 'Seats', 'Transmission'
 X=bd.iloc[:,:-1].values
 y=bd.iloc[:,13].values
 
-bd.iloc[:,:-1].values[1,1]
 
+#Converting the values of 'Fuel_Type' according to the order of trend seen in analysis
 for i in range(len(X)):
     X[i,1]=X[i,1].replace('Diesel','d')
     X[i,1]=X[i,1].replace('CNG','c')
     X[i,1]=X[i,1].replace('LPG','b')
     X[i,1]=X[i,1].replace('Petrol','a')
     
-    
+#Converting the values of 'Transmission' according to the order of trend seen in analysis    
 for i in range(len(X)):
     X[i,2]=X[i,2].replace('Automatic','b')
     X[i,2]=X[i,2].replace('Manual','a')
-    
+ 
+#Converting the values of 'Owner_Type' according to the order of trend seen in analysis 
 for i in range(len(X)):
     X[i,3]=X[i,3].replace('First','d')
     X[i,3]=X[i,3].replace('Second','c')
     X[i,3]=X[i,3].replace('Third','b')
     X[i,3]=X[i,3].replace('Fourth & Above','a')
     
-
+#Label Encoding
 from sklearn.preprocessing import LabelEncoder,OneHotEncoder
 labelencoder_X=LabelEncoder()
 X[:,0]=labelencoder_X.fit_transform(X[:,0])
@@ -166,7 +206,7 @@ X[:,2]=labelencoder_X.fit_transform(X[:,2])
 X[:,3]=labelencoder_X.fit_transform(X[:,3])
 X[:,4]=labelencoder_X.fit_transform(X[:,4])
 
-
+#Label Encoding the test data columns same as the train data
 Xt=test.iloc[:,:-1].values
 yt=test.iloc[:,13].values
 
@@ -207,38 +247,13 @@ for i in range(len(bd)):
     bd.iloc[i,4]=X[i,4]
 bd  
 
-
-X=bd.iloc[:,:-1].values
-y=bd.iloc[:,9].values
-
-from sklearn.model_selection import train_test_split
-X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.2,random_state=0)
-
-from sklearn.linear_model import LinearRegression
-regressor=LinearRegression()
-regressor.fit(X_train,y_train)
-
-
-y_pred=regressor.predict(X_test)
-
-
-from sklearn.ensemble import RandomForestRegressor
-rf = RandomForestRegressor(n_estimators = 1000, random_state = 0)
-rf.fit(X_train, np.ravel(y_train))
-pred=rf.predict(X_test)
-errors = abs(pred-np.ravel(y_test))
-mape = 100 * (errors / np.ravel(y_test))
-accuracy = 100 - np.mean(mape)
-print('Accuracy:', round(accuracy, 2), '%.')
-
-
 for i in range(len(test)):
     test.iloc[i,0]=Xt[i,0]
     test.iloc[i,1]=Xt[i,1]
     test.iloc[i,2]=Xt[i,2]
     test.iloc[i,3]=Xt[i,3]
     test.iloc[i,4]=Xt[i,4]
-bd  
+test 
 
 test=test.dropna(how='any')
 
@@ -247,11 +262,32 @@ test=test.dropna(how='any')
 for i in test.columns.tolist():
     if i not in bd.columns.tolist():
         test.drop(i,axis=1,inplace=True)
-
+        
 for i in bd.columns.tolist():
     if i not in test.columns.tolist() and i!='Price':
         test[i]=0
+        
 
+#Checking the accuracy of our model by splitting the train data as we have no price column in the test data
+#Note: This is just for checking accuracy
+X=bd.iloc[:,:-1].values
+y=bd.iloc[:,9].values
+from sklearn.model_selection import train_test_split
+X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.2,random_state=0)
+#Fitting the model
+from sklearn.linear_model import LinearRegression
+regressor=LinearRegression()
+regressor.fit(X_train,y_train)
+#Predictions and accuracy of the model
+y_pred=regressor.predict(X_test)
+from sklearn.ensemble import RandomForestRegressor
+rf = RandomForestRegressor(n_estimators = 1000, random_state = 0)
+rf.fit(X_train, np.ravel(y_train))
+pred=rf.predict(X_test)
+errors = abs(pred-np.ravel(y_test))
+mape = 100 * (errors / np.ravel(y_test))
+accuracy = 100 - np.mean(mape)
+print('Accuracy:', round(accuracy, 2), '%.')
 
 
 #Fitting the whole train data to predict price from the given test data
